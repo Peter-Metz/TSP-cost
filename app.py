@@ -8,11 +8,6 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 
 
-url_base_pathname = os.environ.get("URL_BASE_PATHNAME", "/")
-
-app = dash.Dash(__name__, url_base_pathname=url_base_pathname)
-
-
 def make_fig(income=30000, nom_rate=0.03, contrib=0.05, match=0.03, leakage=0.4):
 
     match_amt = min(contrib, match)
