@@ -1,0 +1,1 @@
+pip install -U dash dash_bootstrap_components math
