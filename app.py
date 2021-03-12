@@ -35,7 +35,7 @@ def make_fig(income=30000, nom_rate=0.03, contrib=0.05, match=0.03, leakage=0.4)
         xaxis_title="Years Since First Investment",
         plot_bgcolor="white",
         font={"family": "Lato"},
-        margin={"t": 50},
+        margin={"t": 50, "b": 30},
     )
     fig = go.Figure(data=trace, layout=layout)
     fig.update_yaxes(range=[0, axis_max])
@@ -59,6 +59,7 @@ widgets = dbc.Col(
             [
                 dcc.Markdown(
                     """
+                    ----
                     #### Policy Design
                     """,
                     style={"margin-left": "5%", "margin-top": 10, "color": "#3C84A2"},
@@ -67,17 +68,15 @@ widgets = dbc.Col(
                     "Matching Rate", style={"margin-left": "5%", "font-style": "italic"}
                 ),
                 html.Div(
-                    dcc.Slider(
+                    dcc.RadioItems(
                         id="match",
+                        options=[
+                            {"label": "\t3%", "value": 0.03},
+                            {"label": "\t4%", "value": 0.04},
+                            {"label": "\t5%", "value": 0.05},
+                        ],
                         value=0.03,
-                        min=0,
-                        max=0.05,
-                        step=0.01,
-                        marks={
-                            i: "{:.0%}".format(i)
-                            for i in [0, 0.01, 0.02, 0.03, 0.04, 0.05]
-                        },
-                        updatemode="drag",
+                        labelStyle={"display": "inline-block", "margin-left": "5%"},
                     ),
                     style={"width": "70%", "margin-left": "3%"},
                 ),
@@ -228,23 +227,22 @@ widgets = dbc.Col(
                 dcc.RadioItems(
                     id="rate",
                     options=[
-                        {"label": " High", "value": 0.07},
                         {"label": " Low", "value": 0.03},
+                        {"label": " High", "value": 0.07},
                     ],
-                    value=0.07,
+                    value=0.03,
                     labelStyle={"display": "inline-block", "margin-left": "5%"},
                 ),
                 dcc.Markdown(
                     """
                     The rate of return for retirement savings accounts can fluctuate based on factors such as
-                    market conditions and asset allocation. In this simulation, we define a "high" annual rate of
-                    return as 7% and a "low" annual rate of return as 3%. 
-
-                    --- 
+                    market conditions and asset allocation. In this simulation, we define a "low" annual rate of
+                    return as 3% and a "high" annual rate of return as 7%. 
                     """,
                     style={
                         "margin-left": "5%",
                         "margin-right": "5%",
+                        "padding-bottom": "10%",
                         "margin-top": 10,
                         "font-size": 14,
                     },
@@ -275,10 +273,17 @@ app.layout = dbc.Container(
                         ),
                         dcc.Markdown(
                             """
-                    *What if low-income American workers had access to a wealth-building vehicle like the Federal
-                    Employees' Thrift Savings Plan (TSP)?*
-
-
+                    #### What if low-income American workers had access to a wealth-building vehicle like the Federal Employees' Thrift Savings Plan (TSP)?
+                    """,
+                            style={
+                                "font-style": "italic",
+                                "padding-left": "5%",
+                                "padding-right": "5%",
+                                "padding-bottom": 10,
+                            },
+                        ),
+                        dcc.Markdown(
+                            """
                     A major factor in America's accelerating wealth inequality is the lack of retirement savings by millions of Americans. 
                     For the bottom 50 percent of the wealth distribution, the median retirement savings account balance is $0.
                     One way to encourage low-income workers to save, and to facilitate faster savings growth, is to offer a savings
@@ -295,47 +300,31 @@ app.layout = dbc.Container(
                                 "padding-bottom": "3%",
                             },
                         ),
-                        widgets,
                         dbc.Container(
                             [
-                                dcc.Markdown(
-                                    """
-                    #### Results
-                    """,
+                                dbc.Label(
+                                    "",
+                                    id="summary",
                                     style={
-                                        "color": "#3C84A2",
+                                        "font-style": "italic",
+                                        "font-weight": "bold",
+                                        "font-size": 16,
                                     },
                                 ),
                                 dcc.Graph(
                                     id="chart",
                                     config={"displayModeBar": False},
+                                    style={"margin-bottom": 0},
                                 ),
                                 dbc.Label(
-                                    "Summary",
-                                    style={"font-style": "italic"},
-                                ),
-                                html.Li(
                                     "",
-                                    id="bullet_1",
-                                    style={"margin-left": 20},
-                                ),
-                                html.Li(
-                                    "",
-                                    id="bullet_2",
-                                    style={"margin-left": 20},
-                                ),
-                                dbc.Label(
-                                    "Wealth Creation",
-                                    style={"padding-top": 8, "font-style": "italic"},
-                                ),
-                                html.Li(
-                                    "",
-                                    id="bullet_3",
-                                    style={"margin-left": 20},
+                                    id="caption",
+                                    style={"font-style": "italic", "padding-top": "2%"},
                                 ),
                             ],
-                            style={"padding-left": "7%", "padding-bottom": "10%"},
+                            style={"padding-left": "7%", "padding-right": "5%"},
                         ),
+                        widgets,
                     ]
                 ),
             ],
@@ -351,9 +340,8 @@ app.layout = dbc.Container(
 @app.callback(
     [
         Output("chart", "figure"),
-        Output("bullet_1", "children"),
-        Output("bullet_2", "children"),
-        Output("bullet_3", "children"),
+        Output("summary", "children"),
+        Output("caption", "children"),
         Output("savings", "marks"),
         Output("wages", "marks"),
     ],
@@ -371,76 +359,65 @@ def update(match, rate, wages, savings, leakage):
     fig, wealth = make_fig(wages, rate, savings, match, leakage)
 
     saving_amt = wages * savings
-    wealth_tot = sum(wealth)
+    wealth_40 = wealth[-1]
 
-    bullet_1 = "{:.0%} Federal Savings Match".format(match)
-    bullet_2 = "${:0,.0f} annual savings (before early withdrawal)".format(saving_amt)
-    bullet_3 = "Over 40 years, ${:0,.0f} of new wealth will be created".format(
-        wealth_tot
+    summary = "After 40 years of participation in a federal savings match program, assets \
+    grow to ${:0,.0f}.".format(
+        wealth_40
     )
+
+    if (round(wealth_40) == 81433) and (match == 0.03):
+        caption = "* Low end of wealth building impact. Experiment below for alternative scenarios."
+    else:
+        caption = ""
 
     wages_amt = "${:0,.0f}".format(wages)
     wages_marks = {0: "$0", wages: wages_amt, 52000: "$52,000"}
 
-    if match == 0:
-        saving_marks = {
-            0: "0%**",
-            0.02: "2%",
-            0.04: "4%",
-            0.06: "6%",
-            0.08: "8%",
-            0.1: "10%",
-        }
-    if match == 0.01:
+    if match == 0.03:
         saving_marks = {
             0: "0%",
-            0.01: "**",
-            0.02: "2%",
-            0.04: "4%",
-            0.06: "6%",
-            0.08: "8%",
-            0.1: "10%",
-        }
-    elif match == 0.02:
-        saving_marks = {
-            0: "0%",
-            0.02: "2%**",
-            0.04: "4%",
-            0.06: "6%",
-            0.08: "8%",
-            0.1: "10%",
-        }
-    elif match == 0.03:
-        saving_marks = {
-            0: "0%",
+            0.01: "",
             0.02: "2%",
             0.03: "**",
             0.04: "4%",
+            0.05: "",
             0.06: "6%",
+            0.07: "",
             0.08: "8%",
+            0.09: "",
             0.1: "10%",
         }
     elif match == 0.04:
         saving_marks = {
             0: "0%",
+            0.01: "",
             0.02: "2%",
+            0.03: "",
             0.04: "4%**",
+            0.05: "",
             0.06: "6%",
+            0.07: "",
             0.08: "8%",
+            0.09: "",
             0.1: "10%",
         }
     elif match == 0.05:
         saving_marks = {
             0: "0%",
+            0.01: "",
             0.02: "2%",
+            0.03: "",
             0.04: "4%",
             0.05: "**",
             0.06: "6%",
+            0.07: "",
             0.08: "8%",
+            0.09: "",
             0.1: "10%",
         }
 
-    return (fig, bullet_1, bullet_2, bullet_3, saving_marks, wages_marks)
+    return (fig, summary, caption, saving_marks, wages_marks)
 
 
 server = app.server
