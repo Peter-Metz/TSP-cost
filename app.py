@@ -442,4 +442,4 @@ def update(match, rate, wages, savings, leakage):
 server = app.server
 # turn debug=False for production
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False)
