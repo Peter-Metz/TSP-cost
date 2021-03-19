@@ -83,7 +83,6 @@ widgets = dbc.Col(
                         value=0.03,
                         labelStyle={"display": "inline-block", "margin-left": "5%"},
                     ),
-                    style={"width": "70%", "margin-left": "3%"},
                 ),
                 dcc.Markdown(
                     """
@@ -114,7 +113,7 @@ widgets = dbc.Col(
                 dbc.FormGroup(
                     [
                         dbc.Label(
-                            "Savings Rate",
+                            "Savings Rate (the ** symbol refers to the match rate you selected above)",
                             style={"margin-left": "5%", "font-style": "italic"},
                         ),
                         html.Div(
@@ -139,15 +138,13 @@ widgets = dbc.Col(
                         ),
                         dcc.Markdown(
                             """
-                    The savings rate is the percentage of annual income that an employee sets aside in 
-                    their retirement savings fund. The match rate you selected above is denoted by the ** symbol. 
-                    If you select a savings rate below the match rate (e.g., 2%), the government will only 
-                    match up to your savings rate (e.g., 2%) regardless of which match rate you choose. 
-                    Therefore, to take full advantage of a government match, you must have a savings rate at 
-                    least as high as the match rate. Evidence has shown that most low-income federal workers 
-                    in TSP do just this, with a match rate of 5% and an average savings rate of 4.6%. Workers 
-                    are also encouraged to save more than the match rate, but contributions will only be matched 
-                    up to the match rate. 
+                    The savings rate is the percentage of annual income that an employee 
+                    sets aside in their retirement savings fund. The government will only match 
+                    up to your savings rate regardless of which match rate you 
+                    choose. Therefore, to take full advantage of a government match, you must 
+                    have a savings rate at least as high as the match rate. Evidence has 
+                    shown that most low-income federal workers in TSP do just this, with a 
+                    match rate of 5% and an average savings rate of 4.6%. 
                     """,
                             style={
                                 "margin-left": "5%",
@@ -280,48 +277,29 @@ app.layout = dbc.Container(
                     [
                         dcc.Markdown(
                             """
-                    ## Building Wealth with a Federal Savings Match
+                    ## Interactive Tool: Building Wealth with a Federal Savings Match
                     """,
                             style={
                                 "color": "#3C84A2",
-                                "padding-left": "5%",
+                                "padding-left": "6%",
                                 "padding-right": "5%",
                                 "padding-top": "3%",
-                                "padding-bottom": "3%",
+                                "padding-bottom": "2%",
                             },
                         ),
                         dcc.Markdown(
                             """
-                    #### What if low-income American workers had access to a wealth-building vehicle like the Federal Employees' Thrift Savings Plan (TSP)?
-                    """,
-                            style={
-                                "font-style": "italic",
-                                "padding-left": "5%",
-                                "padding-right": "5%",
-                                "padding-bottom": 10,
-                            },
-                        ),
-                        dcc.Markdown(
-                            """
-                    Millions of low- and moderate-income Americans lack any meaningful amount of wealth, 
-                    with the median amount of wealth being $0 for the bottom 50 percent of American families. 
-                    A major contributing factor to this phenomenon is the lack of retirement savings by 
-                    millions of Americans. One way to encourage low-income workers to save, and to facilitate 
-                    faster savings growth, is to offer a savings plan in which the employer chips into the 
-                    account. However, between one-third and one-half of Americans either do not have access 
-                    to or do not participate in an employer-sponsored retirement plan (like a 401(k) or 
-                    pension). By contrast, more than 90 percent of federal workers participate in the 
-                    federal Thrift Savings Plan (TSP), a contribution savings plan offered by the 
-                    federal government that has successfully generated wealth for many federal employees and 
-                    members of the military. This tool below is intended to demonstrate the potential 
-                    impact of a wealth-building vehicle like TSP for all low-income Americans.
+                    This interactive tool is intended to simulate the potential impact of 
+                    access to a wealth-building program like TSP for low- and moderate-income 
+                    Americans. Enter a matching rate, annual income, savings rate, early 
+                    withdrawal, and anticipated average annual returns to explore possible 
+                    retirement savings balances with such a program. 
 
                     ---
                     """,
                             style={
-                                "padding-left": "5%",
+                                "padding-left": "6%",
                                 "padding-right": "5%",
-                                "padding-bottom": "2%",
                             },
                         ),
                         widgets,
@@ -348,7 +326,7 @@ app.layout = dbc.Container(
                                     style={"margin-bottom": "10%"},
                                 ),
                             ],
-                            style={"padding-left": "7%", "padding-right": "5%"},
+                            style={"padding-left": "5%", "padding-right": "5%"},
                         ),
                     ]
                 ),
@@ -386,7 +364,7 @@ def update(match, rate, wages, savings, leakage):
     wealth_40 = wealth[-1]
 
     summary = "After 40 years of participation in a federal savings match program, assets \
-    grow to ${:0,.0f}.".format(
+    grow to ${:0,.0f}, before taxes and fees.".format(
         wealth_40
     )
 
@@ -442,4 +420,4 @@ def update(match, rate, wages, savings, leakage):
 server = app.server
 # turn debug=False for production
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(debug=True)
