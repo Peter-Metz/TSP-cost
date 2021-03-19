@@ -8,14 +8,16 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 
 
-def make_fig(income=30000, nom_rate=0.03, contrib=0.05, match=0.03, leakage=0.4):
+def make_fig(income=30000, nom_rate=0.03, contrib=0.03, match=0.03, leakage=0.4):
 
     match_amt = min(contrib, match)
-    total_contrib = match_amt + contrib
+
     wealth = [0]
     for year in range(1, 41):
-        assets_year = (wealth[-1] * (1 + nom_rate)) + (
-            total_contrib * income * (1 - leakage)
+        assets_year = (
+            (wealth[-1] * (1 + nom_rate))
+            + (match_amt * income)
+            + (contrib * income * (1 - leakage))
         )
         wealth.append(assets_year)
 
@@ -59,10 +61,13 @@ widgets = dbc.Col(
             [
                 dcc.Markdown(
                     """
-                    ----
                     #### Policy Design
                     """,
-                    style={"margin-left": "5%", "margin-top": 10, "color": "#3C84A2"},
+                    style={
+                        "margin-left": "5%",
+                        "margin-right": "5%",
+                        "color": "#3C84A2",
+                    },
                 ),
                 dbc.Label(
                     "Matching Rate", style={"margin-left": "5%", "font-style": "italic"}
@@ -106,7 +111,56 @@ widgets = dbc.Col(
                     """,
                     style={"margin-left": "5%", "margin-top": 20, "color": "#3C84A2"},
                 ),
-                dbc.Label("Wages", style={"margin-left": "5%", "font-style": "italic"}),
+                dbc.FormGroup(
+                    [
+                        dbc.Label(
+                            "Savings Rate",
+                            style={"margin-left": "5%", "font-style": "italic"},
+                        ),
+                        html.Div(
+                            dcc.Slider(
+                                id="savings",
+                                value=0.03,
+                                min=0,
+                                max=0.1,
+                                step=0.01,
+                                marks={
+                                    0: "0%",
+                                    0.02: "2%",
+                                    0.03: "**",
+                                    0.04: "4%",
+                                    0.06: "6%",
+                                    0.08: "8%",
+                                    0.1: "10%",
+                                },
+                                updatemode="drag",
+                            ),
+                            style={"width": "70%", "margin-left": "3%"},
+                        ),
+                        dcc.Markdown(
+                            """
+                    The savings rate is the percentage of annual income that an employee sets aside in 
+                    their retirement savings fund. The match rate you selected above is denoted by the ** symbol. 
+                    If you select a savings rate below the match rate (e.g., 2%), the government will only 
+                    match up to your savings rate (e.g., 2%) regardless of which match rate you choose. 
+                    Therefore, to take full advantage of a government match, you must have a savings rate at 
+                    least as high as the match rate. Evidence has shown that most low-income federal workers 
+                    in TSP do just this, with a match rate of 5% and an average savings rate of 4.6%. Workers 
+                    are also encouraged to save more than the match rate, but contributions will only be matched 
+                    up to the match rate. 
+                    """,
+                            style={
+                                "margin-left": "5%",
+                                "margin-right": "5%",
+                                "margin-top": 10,
+                                "font-size": 14,
+                            },
+                        ),
+                    ]
+                ),
+                dbc.Label(
+                    "Income", style={"margin-left": "5%", "font-style": "italic"}
+                ),
                 html.Div(
                     dcc.Slider(
                         id="wages",
@@ -136,47 +190,6 @@ widgets = dbc.Col(
         dbc.FormGroup(
             [
                 dbc.Label(
-                    "Savings Rate", style={"margin-left": "5%", "font-style": "italic"}
-                ),
-                html.Div(
-                    dcc.Slider(
-                        id="savings",
-                        value=0.03,
-                        min=0,
-                        max=0.1,
-                        step=0.01,
-                        marks={
-                            0: "0%",
-                            0.02: "2%",
-                            0.03: "**",
-                            0.04: "4%",
-                            0.06: "6%",
-                            0.08: "8%",
-                            0.1: "10%",
-                        },
-                        updatemode="drag",
-                    ),
-                    style={"width": "70%", "margin-left": "3%"},
-                ),
-                dcc.Markdown(
-                    """
-                    The savings rate is the percentage of annual income that an employee sets aside in their retirement
-                    savings fund. To take full advantage of a government match, the employee
-                    must contribute at least as much as the government offers to match. The match rate you selected
-                    above is denoted by the ** symbol. 
-                    """,
-                    style={
-                        "margin-left": "5%",
-                        "margin-right": "5%",
-                        "margin-top": 10,
-                        "font-size": 14,
-                    },
-                ),
-            ]
-        ),
-        dbc.FormGroup(
-            [
-                dbc.Label(
                     "Early Withdrawal",
                     style={"margin-left": "5%", "font-style": "italic"},
                 ),
@@ -185,21 +198,21 @@ widgets = dbc.Col(
                         id="leakage",
                         value=0.4,
                         min=0,
-                        max=0.5,
+                        max=0.4,
                         step=0.1,
-                        marks={
-                            i: "{:.0%}".format(i) for i in [0, 0.1, 0.2, 0.3, 0.4, 0.5]
-                        },
+                        marks={i: "{:.0%}".format(i) for i in [0, 0.1, 0.2, 0.3, 0.4]},
                         updatemode="drag",
                     ),
                     style={"width": "70%", "margin-left": "3%"},
                 ),
                 dcc.Markdown(
                     """
-                    A key factor to consider as we simulate possible wealth creation scenarios is that individuals, 
-                    especially lower-income individuals, tend to need to access the wealth accumulated in 
-                    their retirement accounts as emergencies arise, so that the wealth “leaks” from the 
-                    accounts over time at a rate of up to 40 percent.
+                    A key factor to consider as we simulate possible wealth creation scenarios 
+                    is that lower-income individuals may need to access the wealth accumulated 
+                    in their retirement accounts as emergencies arise, so that the wealth “leaks” 
+                    from the accounts over time at a rate of up to 40 percent. Importantly, 
+                    participants can only access their own contributions (not the government 
+                    matched contributions) prior to retirement. 
 
                     ---
                     """,
@@ -216,33 +229,39 @@ widgets = dbc.Col(
             [
                 dcc.Markdown(
                     """
-                    #### Economic Conditions
+                    #### Market Performance
                     """,
                     style={"margin-left": "5%", "margin-top": 20, "color": "#3C84A2"},
                 ),
                 dbc.Label(
-                    "Annual Investment Returns",
+                    "Average Annual Investment Returns",
                     style={"margin-left": "5%", "font-style": "italic"},
                 ),
                 dcc.RadioItems(
                     id="rate",
                     options=[
-                        {"label": " Low", "value": 0.03},
-                        {"label": " High", "value": 0.07},
+                        {"label": " 3%", "value": 0.03},
+                        {"label": " 5%", "value": 0.05},
+                        {"label": " 7%", "value": 0.07},
                     ],
                     value=0.03,
                     labelStyle={"display": "inline-block", "margin-left": "5%"},
                 ),
                 dcc.Markdown(
                     """
-                    The rate of return for retirement savings accounts can fluctuate based on factors such as
-                    market conditions and asset allocation. In this simulation, we define a "low" annual rate of
-                    return as 3% and a "high" annual rate of return as 7%. 
+                    The rate of return for retirement savings accounts can fluctuate 
+                    based on factors such as market conditions and asset allocation. 
+                    Financial advisors often tell their clients to expect an average 
+                    rate of return between 5-7%. As such, in this simulation we define 
+                    3% a low, baseline rate of return, 5% as the low-end of realistic 
+                    returns, and 7% as the high-end of realistic returns. 
+
+                    ---
                     """,
                     style={
                         "margin-left": "5%",
                         "margin-right": "5%",
-                        "padding-bottom": "10%",
+                        # "padding-bottom": "3%",
                         "margin-top": 10,
                         "font-size": 14,
                     },
@@ -284,24 +303,36 @@ app.layout = dbc.Container(
                         ),
                         dcc.Markdown(
                             """
-                    A major factor in America's accelerating wealth inequality is the lack of retirement savings by millions of Americans. 
-                    For the bottom 50 percent of the wealth distribution, the median retirement savings account balance is $0.
-                    One way to encourage low-income workers to save, and to facilitate faster savings growth, is to offer a savings
-                    plan in which the employer chips in to the account. Federal, state, and local governments have been successful in providing efficient and adequate 
-                    savings vehicles for their workers. For example, TSP, a contribution savings plan offered by the federal government, 
-                    has successfully generated wealth for many federal employees and members of the military. This tool is intended to demonstrate 
-                    the potential impact of a wealth-building vehicle like TSP for all low-income Americans.
+                    Millions of low- and moderate-income Americans lack any meaningful amount of wealth, 
+                    with the median amount of wealth being $0 for the bottom 50 percent of American families. 
+                    A major contributing factor to this phenomenon is the lack of retirement savings by 
+                    millions of Americans. One way to encourage low-income workers to save, and to facilitate 
+                    faster savings growth, is to offer a savings plan in which the employer chips into the 
+                    account. However, between one-third and one-half of Americans either do not have access 
+                    to or do not participate in an employer-sponsored retirement plan (like a 401(k) or 
+                    pension). By contrast, more than 90 percent of federal workers participate in the 
+                    federal Thrift Savings Plan (TSP), a contribution savings plan offered by the 
+                    federal government that has successfully generated wealth for many federal employees and 
+                    members of the military. This tool below is intended to demonstrate the potential 
+                    impact of a wealth-building vehicle like TSP for all low-income Americans.
 
                     ---
                     """,
                             style={
                                 "padding-left": "5%",
                                 "padding-right": "5%",
-                                "padding-bottom": "3%",
+                                "padding-bottom": "2%",
                             },
                         ),
+                        widgets,
                         dbc.Container(
                             [
+                                dcc.Markdown(
+                                    """
+                                    #### Results
+                                    """,
+                                    style={"color": "#3C84A2"},
+                                ),
                                 dbc.Label(
                                     "",
                                     id="summary",
@@ -314,17 +345,11 @@ app.layout = dbc.Container(
                                 dcc.Graph(
                                     id="chart",
                                     config={"displayModeBar": False},
-                                    style={"margin-bottom": 0},
-                                ),
-                                dbc.Label(
-                                    "",
-                                    id="caption",
-                                    style={"font-style": "italic", "padding-top": "2%"},
+                                    style={"margin-bottom": "10%"},
                                 ),
                             ],
                             style={"padding-left": "7%", "padding-right": "5%"},
                         ),
-                        widgets,
                     ]
                 ),
             ],
@@ -341,7 +366,6 @@ app.layout = dbc.Container(
     [
         Output("chart", "figure"),
         Output("summary", "children"),
-        Output("caption", "children"),
         Output("savings", "marks"),
         Output("wages", "marks"),
     ],
@@ -365,11 +389,6 @@ def update(match, rate, wages, savings, leakage):
     grow to ${:0,.0f}.".format(
         wealth_40
     )
-
-    if (round(wealth_40) == 81433) and (match == 0.03):
-        caption = "* Low end of wealth building impact. Experiment below for alternative scenarios."
-    else:
-        caption = ""
 
     wages_amt = "${:0,.0f}".format(wages)
     wages_marks = {0: "$0", wages: wages_amt, 52000: "$52,000"}
@@ -417,10 +436,10 @@ def update(match, rate, wages, savings, leakage):
             0.1: "10%",
         }
 
-    return (fig, summary, caption, saving_marks, wages_marks)
+    return (fig, summary, saving_marks, wages_marks)
 
 
 server = app.server
 # turn debug=False for production
 if __name__ == "__main__":
-    app.run_server()
+    app.run_server(debug=True)
