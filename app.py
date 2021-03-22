@@ -327,7 +327,7 @@ app.layout = dbc.Container(
                                     style={"margin-bottom": "10%"},
                                 ),
                             ],
-                            style={"padding-left": "7%", "padding-right": "5%"},
+                            style={"padding-left": "5%", "padding-right": "5%"},
                         ),
                     ]
                 ),
