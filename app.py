@@ -52,6 +52,7 @@ def make_fig(income=30000, nom_rate=0.03, contrib=0.03, match=0.03, leakage=0.4)
 
 
 app = dash.Dash(
+    __name__,
     external_stylesheets=[dbc.themes.FLATLY],
     url_base_pathname=os.environ.get("URL_BASE_PATHNAME", "/"),
 )
@@ -282,7 +283,7 @@ app.layout = dbc.Container(
                     """,
                             style={
                                 "color": "#75A074",
-                                "padding-left": "6%",
+                                "margin-left": "5%",
                                 "padding-right": "5%",
                                 "padding-top": "3%",
                                 "padding-bottom": "2%",
@@ -299,7 +300,7 @@ app.layout = dbc.Container(
                     ---
                     """,
                             style={
-                                "padding-left": "6%",
+                                "margin-left": "5%",
                                 "padding-right": "5%",
                             },
                         ),
@@ -327,7 +328,7 @@ app.layout = dbc.Container(
                                     style={"margin-bottom": "10%"},
                                 ),
                             ],
-                            style={"padding-left": "5%", "padding-right": "5%"},
+                            style={"margin-left": "5%", "padding-right": "5%"},
                         ),
                     ]
                 ),
