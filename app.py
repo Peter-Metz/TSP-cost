@@ -27,6 +27,7 @@ def make_fig(income=30000, nom_rate=0.03, contrib=0.03, match=0.03, leakage=0.4)
         width=0.8,
         marker_color="#75A074",
         opacity=0.85,
+        hoverlabel = dict(font=dict(color='white')),
         hovertemplate="Year %{x}<br>" + "New Savings: $%{y:,.0f}<extra></extra>",
     )
 
@@ -326,7 +327,7 @@ app.layout = dbc.Container(
                                     style={"margin-bottom": "10%"},
                                 ),
                             ],
-                            style={"padding-left": "5%", "padding-right": "5%"},
+                            style={"padding-left": "7%", "padding-right": "5%"},
                         ),
                     ]
                 ),
