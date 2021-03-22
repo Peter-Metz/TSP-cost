@@ -25,7 +25,7 @@ def make_fig(income=30000, nom_rate=0.03, contrib=0.03, match=0.03, leakage=0.4)
         x=list(range(0, 41)),
         y=wealth,
         width=0.8,
-        marker_color="#3C84A2",
+        marker_color="#75A074",
         opacity=0.85,
         hovertemplate="Year %{x}<br>" + "New Savings: $%{y:,.0f}<extra></extra>",
     )
@@ -66,7 +66,7 @@ widgets = dbc.Col(
                     style={
                         "margin-left": "5%",
                         "margin-right": "5%",
-                        "color": "#3C84A2",
+                        "color": "#75A074",
                     },
                 ),
                 dbc.Label(
@@ -108,7 +108,7 @@ widgets = dbc.Col(
                     """
                     #### Earner Characteristics
                     """,
-                    style={"margin-left": "5%", "margin-top": 20, "color": "#3C84A2"},
+                    style={"margin-left": "5%", "margin-top": 20, "color": "#75A074"},
                 ),
                 dbc.FormGroup(
                     [
@@ -228,7 +228,7 @@ widgets = dbc.Col(
                     """
                     #### Market Performance
                     """,
-                    style={"margin-left": "5%", "margin-top": 20, "color": "#3C84A2"},
+                    style={"margin-left": "5%", "margin-top": 20, "color": "#75A074"},
                 ),
                 dbc.Label(
                     "Average Annual Investment Returns",
@@ -280,7 +280,7 @@ app.layout = dbc.Container(
                     ## Interactive Tool: Building Wealth with a Federal Savings Match
                     """,
                             style={
-                                "color": "#3C84A2",
+                                "color": "#75A074",
                                 "padding-left": "6%",
                                 "padding-right": "5%",
                                 "padding-top": "3%",
@@ -309,7 +309,7 @@ app.layout = dbc.Container(
                                     """
                                     #### Results
                                     """,
-                                    style={"color": "#3C84A2"},
+                                    style={"color": "#75A074"},
                                 ),
                                 dbc.Label(
                                     "",
