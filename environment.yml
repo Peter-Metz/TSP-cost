@@ -1,0 +1,9 @@
+name: tsp-app-dev
+channels:
+- conda-forge
+dependencies:
+- pandas
+- pip
+- pip:
+  - dash 
+  - dash_bootstrap_components
