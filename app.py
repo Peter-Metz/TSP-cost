@@ -1,54 +1,125 @@
 import os
+import pandas as pd
 import plotly.graph_objects as go
 import math
 import dash
+import dash_table
+from dash_table import FormatTemplate
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 
 
-def make_fig(income=30000, nom_rate=0.03, contrib=0.03, match=0.03, leakage=0.4):
+CURR_PATH = os.path.abspath(os.path.dirname(__file__))
 
-    match_amt = min(contrib, match)
 
-    wealth = [0]
-    for year in range(1, 41):
-        assets_year = (
-            (wealth[-1] * (1 + nom_rate))
-            + (match_amt * income)
-            + (contrib * income * (1 - leakage))
+def read_data(f_name):
+    path = os.path.join(CURR_PATH, "data/" + f_name)
+    return pd.read_csv(path)
+
+
+cost_df = read_data("cost.csv")
+total_wealth_df = read_data("total_wealth.csv")
+wealth_25_df = read_data("wealth_25.csv")
+wealth_25_50_df = read_data("wealth_25_50.csv")
+
+
+def _filter_data(df, match_rt, phaseout_start, phaseout_rt, takeup_rt, leakage, roi):
+
+    new_df = df.loc[
+        (df["match_rt"] == match_rt)
+        & (df["phaseout_start"] == phaseout_start)
+        & (df["phaseout_rt"] == phaseout_rt)
+        & (df["takeup_rt"] == takeup_rt)
+        & (df["leakage"] == leakage)
+        & (df["roi"] == roi)
+    ]
+
+    return new_df
+
+
+def _make_graph(df):
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=df.columns,
+            y=df.loc["Total Wealth Generated"].round(1),
+            mode="lines",
+            name="Wealth (bn)",
+            # hoverinfo="skip",
+            line=dict(color="#d69470", width=4),
         )
-        wealth.append(assets_year)
-
-    trace = go.Bar(
-        x=list(range(0, 41)),
-        y=wealth,
-        width=0.8,
-        marker_color="#75A074",
-        opacity=0.85,
-        hoverlabel = dict(font=dict(color='white')),
-        hovertemplate="Year %{x}<br>" + "New Savings: $%{y:,.0f}<extra></extra>",
     )
-
-    axis_max = int(math.ceil(wealth[-1] / 100000)) * 100000
-
-    layout = go.Layout(
-        yaxis_title="New Savings",
-        xaxis_title="Years Since First Investment",
-        plot_bgcolor="white",
-        font={"family": "Lato"},
-        margin={"t": 50, "b": 30},
+    fig.add_trace(
+        go.Scatter(
+            x=df.columns,
+            y=df.loc["Budget Estimate"].round(1),
+            mode="lines",
+            name="Cost (bn)",
+            # hoverinfo="skip",
+            line=dict(color="#9972b8", width=4),
+        )
     )
-    fig = go.Figure(data=trace, layout=layout)
-    fig.update_yaxes(range=[0, axis_max])
 
     fig.update_layout(
-        yaxis_tickprefix="$",
-        yaxis_tickformat=",.",
+        yaxis_title="Billions USD",
+        yaxis=dict(tickformat="${,.0f}"),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        margin=dict(l=20, r=20, t=20, b=20),
+        font_family="HelveticaNeue",
+        hovermode="x unified",
+        legend=dict(orientation="h", yanchor="top", y=-0.1, xanchor="left", x=0.01),
     )
 
-    return fig, wealth
+    return fig
+
+
+def filter_data(
+    match_rt=0.05,
+    phaseout_start=0.5,
+    phaseout_rt=0.05,
+    takeup_rt=0.85,
+    leakage=0.3,
+    roi=0.03,
+):
+
+    cost_filter = _filter_data(
+        cost_df, match_rt, phaseout_start, phaseout_rt, takeup_rt, leakage, roi
+    )
+    total_wealth_filter = _filter_data(
+        total_wealth_df, match_rt, phaseout_start, phaseout_rt, takeup_rt, leakage, roi
+    )
+    wealth_25_filter = _filter_data(
+        wealth_25_df, match_rt, phaseout_start, phaseout_rt, takeup_rt, leakage, roi
+    )
+    wealth_25_50_filter = _filter_data(
+        wealth_25_50_df, match_rt, phaseout_start, phaseout_rt, takeup_rt, leakage, roi
+    )
+
+    sum_df = pd.concat(
+        [cost_filter, wealth_25_filter, wealth_25_50_filter, total_wealth_filter]
+    )
+
+    sum_df.index = [
+        "Budget Estimate",
+        "Wealth Generated for <25th Percentile",
+        "Wealth Generated for 25th-50th Percentile",
+        "Total Wealth Generated",
+    ]
+    sum_df = sum_df.drop(
+        ["match_rt", "phaseout_start", "phaseout_rt", "takeup_rt", "leakage", "roi"],
+        axis=1,
+    )
+
+    agg_df = sum_df.cumsum(axis=1).abs()
+    agg_df = agg_df.drop(["Total"], axis=1)
+
+    fig = _make_graph(agg_df)
+
+    return sum_df.round(1).reset_index(), fig
 
 
 app = dash.Dash(
@@ -101,81 +172,36 @@ widgets = dbc.Col(
                         "font-size": 14,
                     },
                 ),
-            ]
-        ),
-        dbc.FormGroup(
-            id="wages_container",
-            children=[
-                dcc.Markdown(
-                    """
-                    #### Earner Characteristics
-                    """,
-                    style={"margin-left": "5%", "margin-top": 20, "color": "#75A074"},
-                ),
-                dbc.FormGroup(
-                    [
-                        dbc.Label(
-                            "Savings Rate (the ** symbol refers to the match rate you selected above)",
-                            style={"margin-left": "5%", "font-style": "italic"},
-                        ),
-                        html.Div(
-                            dcc.Slider(
-                                id="savings",
-                                value=0.03,
-                                min=0,
-                                max=0.1,
-                                step=0.01,
-                                marks={
-                                    0: "0%",
-                                    0.02: "2%",
-                                    0.03: "**",
-                                    0.04: "4%",
-                                    0.06: "6%",
-                                    0.08: "8%",
-                                    0.1: "10%",
-                                },
-                                updatemode="drag",
-                            ),
-                            style={"width": "70%", "margin-left": "3%"},
-                        ),
-                        dcc.Markdown(
-                            """
-                    The savings rate is the percentage of annual income that an employee 
-                    sets aside in their retirement savings fund. The government will only match 
-                    up to your savings rate regardless of which match rate you 
-                    choose. Therefore, to take full advantage of a government match, you must 
-                    have a savings rate at least as high as the match rate. Evidence has 
-                    shown that most low-income federal workers in TSP do just this, with a 
-                    match rate of 5% and an average savings rate of 4.6%. 
-                    """,
-                            style={
-                                "margin-left": "5%",
-                                "margin-right": "5%",
-                                "margin-top": 10,
-                                "font-size": 14,
-                            },
-                        ),
-                    ]
-                ),
                 dbc.Label(
-                    "Income", style={"margin-left": "5%", "font-style": "italic"}
+                    "Benefit Phaseout",
+                    style={"margin-left": "5%", "font-style": "italic"},
                 ),
                 html.Div(
-                    dcc.Slider(
-                        id="wages",
-                        value=30000,
-                        min=0,
-                        max=52000,
-                        step=1000,
-                        marks={0: "$0", 30000: "$30,000", 52000: "$52,000"},
-                        updatemode="drag",
+                    dcc.RadioItems(
+                        id="phaseout",
+                        options=[
+                            {"label": "Scenario A", "value": 1},
+                            {"label": "Scenario B", "value": 2},
+                        ],
+                        value=1,
+                        labelStyle={"display": "inline-block", "margin-left": "5%"},
                     ),
-                    style={"width": "70%", "margin-left": "3%"},
                 ),
                 dcc.Markdown(
                     """
-                    As a federal savings match policy would target low-income workers, we cap the allowable
-                    income at $52,000, approximately the median annual income for full-time workers as of Fall 2020.
+                    **Scenario A**. The match amount is capped for those earning more than 
+                    **one half** of median earnings (in 2020, the median was approximately $52,000).
+                    For every thousand dollars in income over this threshold, the 
+                    match amount decreases by **three percent**.
+
+                    **Scenario B**. The match amount is capped for those earning more than **two thirds** of 
+                    median earnings (in 2020, the median was approximately $52,000).
+                    For every thousand dollars in income over this threshold, the 
+                    match amount decreases by **five percent**.
+
+
+
+                    ---
                     """,
                     style={
                         "margin-left": "5%",
@@ -183,6 +209,16 @@ widgets = dbc.Col(
                         "margin-top": 10,
                         "font-size": 14,
                     },
+                ),
+            ]
+        ),
+        dbc.FormGroup(
+            children=[
+                dcc.Markdown(
+                    """
+                    #### Earner Characteristics
+                    """,
+                    style={"margin-left": "5%", "margin-top": 20, "color": "#75A074"},
                 ),
             ],
         ),
@@ -195,7 +231,7 @@ widgets = dbc.Col(
                 html.Div(
                     dcc.Slider(
                         id="leakage",
-                        value=0.4,
+                        value=0.3,
                         min=0,
                         max=0.4,
                         step=0.1,
@@ -223,6 +259,34 @@ widgets = dbc.Col(
                     },
                 ),
             ]
+        ),
+        dbc.Label("Takeup Rate", style={"margin-left": "5%", "font-style": "italic"}),
+        html.Div(
+            dcc.RadioItems(
+                id="takeup",
+                options=[
+                    {"label": "\t70%", "value": 0.7},
+                    {"label": "\t85%", "value": 0.85},
+                    {"label": "\t100%", "value": 1},
+                ],
+                value=0.85,
+                labelStyle={"display": "inline-block", "margin-left": "5%"},
+            ),
+        ),
+        dcc.Markdown(
+            """
+                    Eligible earners are not automatically enrolled in the federal savings
+                    match program. Some eligible earners may choose not to enroll due to
+                    a lack of knowledge of the program or an inability to save. 
+
+                    ---
+                    """,
+            style={
+                "margin-left": "5%",
+                "margin-right": "5%",
+                "margin-top": 10,
+                "font-size": 14,
+            },
         ),
         dbc.FormGroup(
             [
@@ -279,7 +343,7 @@ app.layout = dbc.Container(
                     [
                         dcc.Markdown(
                             """
-                    ## Interactive Tool: Building Wealth with a Federal Savings Match
+                    ## Interactive Tool: The Costs and Benefits of a Federal Savings Match
                     """,
                             style={
                                 "color": "#75A074",
@@ -291,11 +355,11 @@ app.layout = dbc.Container(
                         ),
                         dcc.Markdown(
                             """
-                    This interactive tool is intended to simulate the potential impact of 
-                    access to a wealth-building program like TSP for low- and moderate-income 
-                    Americans. Enter a matching rate, annual income, savings rate, early 
-                    withdrawal, and anticipated average annual returns to explore possible 
-                    retirement savings balances with such a program. 
+                    This interactive tool is intended to simulate the potential federal budgetary 
+                    and wealth generation impacts of a wealth-building program like TSP for 
+                    low- and moderate-income Americans. Enter a matching rate, benefit phaseout scenario, 
+                    takeup rate, early withdrawal rate, and anticipated average annual returns to 
+                    explore possible federal budgetary impacts and aggregate wealth creation of such a program.
 
                     ---
                     """,
@@ -311,112 +375,111 @@ app.layout = dbc.Container(
                                     """
                                     #### Results
                                     """,
-                                    style={"color": "#75A074"},
-                                ),
-                                dbc.Label(
-                                    "",
-                                    id="summary",
                                     style={
-                                        "font-style": "italic",
-                                        "font-weight": "bold",
-                                        "font-size": 16,
+                                        "color": "#75A074",
+                                        "margin-left": "5%",
+                                        "padding-right": "5%",
                                     },
                                 ),
-                                dcc.Graph(
-                                    id="chart",
-                                    config={"displayModeBar": False},
-                                    style={"margin-bottom": "10%"},
+                                dbc.Label(
+                                    "Annual Effects",
+                                    style={"margin-left": "5%", "font-style": "italic"},
                                 ),
-                            ],
-                            style={"margin-left": "5%", "padding-right": "5%"},
+                                html.Div(
+                                    [
+                                        dash_table.DataTable(
+                                            id="sum_table",
+                                            style_as_list_view=True,
+                                            style_cell={
+                                                "font-size": "12px",
+                                                "font-family": "HelveticaNeue",
+                                            },
+                                            style_data_conditional=[
+                                                {
+                                                    "if": {"row_index": "odd"},
+                                                    "backgroundColor": "rgb(248, 248, 248)",
+                                                }
+                                            ],
+                                            style_header={
+                                                "backgroundColor": "rgb(230, 230, 230)",
+                                                "fontWeight": "bold",
+                                            },
+                                        )
+                                    ],
+                                    style={"margin-left": "5%", "padding-right": "5%"},
+                                ),
+                                dcc.Markdown(
+                                    """
+                    ---
+                    """,
+                                style={"margin-left": "5%", "margin-top": 30},),
+                                dbc.Label(
+                                    "Cumulative Effects",
+                                    style={
+                                        "margin-left": "5%",
+                                        "margin-top": 20,
+                                        "font-style": "italic",
+                                    },
+                                ),
+                                html.Div([dcc.Graph(id="fig")]),
+                            ]
                         ),
-                    ]
+                    ],
+                    style={"margin-left": "5%", "padding-right": "5%"},
                 ),
             ],
-            align="center",
-            style={"padding-left": "10%", "padding-right": "10%"},
         ),
     ],
-    fluid=True,
-    style={"background-color": "#EAEAEA", "height": "100%"},
+    style={"padding-left": "10%", "padding-right": "10%"},
 )
+
+#     ],
+#     fluid=True,
+#     style={"background-color": "#EAEAEA", "height": "100%"},
+# )
 
 
 @app.callback(
     [
-        Output("chart", "figure"),
-        Output("summary", "children"),
-        Output("savings", "marks"),
-        Output("wages", "marks"),
+        Output("sum_table", "data"),
+        Output("sum_table", "columns"),
+        Output("fig", "figure"),
     ],
     [
         Input("match", "value"),
-        Input("rate", "value"),
-        Input("wages", "value"),
-        Input("savings", "value"),
+        Input("phaseout", "value"),
         Input("leakage", "value"),
+        Input("takeup", "value"),
+        Input("rate", "value"),
     ],
 )
-def update(match, rate, wages, savings, leakage):
+def update(match, phaseout, leakage, takeup, rate):
     # call function that constructs figure
 
-    fig, wealth = make_fig(wages, rate, savings, match, leakage)
+    if phaseout == 1:
+        phaseout_start = 0.5
+        phaseout_rt = 0.03
 
-    saving_amt = wages * savings
-    wealth_40 = wealth[-1]
+    elif phaseout == 2:
+        phaseout_start = 0.67
+        phaseout_rt = 0.05
 
-    summary = "After 40 years of participation in a federal savings match program, assets \
-    grow to ${:0,.0f}, before taxes and fees.".format(
-        wealth_40
+    sum_table, agg_fig = filter_data(
+        match_rt=match,
+        phaseout_start=phaseout_start,
+        phaseout_rt=phaseout_rt,
+        takeup_rt=takeup,
+        leakage=leakage,
+        roi=rate,
     )
 
-    wages_amt = "${:0,.0f}".format(wages)
-    wages_marks = {0: "$0", wages: wages_amt, 52000: "$52,000"}
+    sum_table = sum_table.rename(columns={"index": ""})
 
-    if match == 0.03:
-        saving_marks = {
-            0: "0%",
-            0.01: "",
-            0.02: "2%",
-            0.03: "**",
-            0.04: "4%",
-            0.05: "",
-            0.06: "6%",
-            0.07: "",
-            0.08: "8%",
-            0.09: "",
-            0.1: "10%",
-        }
-    elif match == 0.04:
-        saving_marks = {
-            0: "0%",
-            0.01: "",
-            0.02: "2%",
-            0.03: "",
-            0.04: "4%**",
-            0.05: "",
-            0.06: "6%",
-            0.07: "",
-            0.08: "8%",
-            0.09: "",
-            0.1: "10%",
-        }
-    elif match == 0.05:
-        saving_marks = {
-            0: "0%",
-            0.01: "",
-            0.02: "2%",
-            0.03: "",
-            0.04: "4%",
-            0.05: "**",
-            0.06: "6%",
-            0.07: "",
-            0.08: "8%",
-            0.09: "",
-            0.1: "10%",
-        }
+    columns = [{"name": str(i), "id": str(i)} for i in sum_table.columns]
 
-    return (fig, summary, saving_marks, wages_marks)
+    data_table = sum_table.to_dict("records")
+
+    return data_table, columns, agg_fig
 
 
 server = app.server

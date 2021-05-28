@@ -19,3 +19,7 @@
   border-color: #75A074;
   box-shadow: unset;
 }
+
+.modebar {
+	display: none !important;
+}
