@@ -105,8 +105,8 @@ def filter_data(
 
     sum_df.index = [
         "Budget Estimate",
-        "Wealth Generated for <25th Percentile",
-        "Wealth Generated for 25th-50th Percentile",
+        "Wealth Generated for <25p",
+        "Wealth Generated for 25-50p",
         "Total Wealth Generated",
     ]
     sum_df = sum_df.drop(
@@ -180,8 +180,8 @@ widgets = dbc.Col(
                     dcc.RadioItems(
                         id="phaseout",
                         options=[
-                            {"label": "Scenario A", "value": 1},
-                            {"label": "Scenario B", "value": 2},
+                            {"label": " Slow Phaseout", "value": 1},
+                            {"label": " Fast Phaseout", "value": 2},
                         ],
                         value=1,
                         labelStyle={"display": "inline-block", "margin-left": "5%"},
@@ -189,12 +189,12 @@ widgets = dbc.Col(
                 ),
                 dcc.Markdown(
                     """
-                    **Scenario A**. The match amount is capped for those earning more than 
+                    **Slow Phaseout**. The match amount is capped for those earning more than 
                     **one half** of median earnings (in 2020, the median was approximately $52,000).
                     For every thousand dollars in income over this threshold, the 
                     match amount decreases by **three percent**.
 
-                    **Scenario B**. The match amount is capped for those earning more than **two thirds** of 
+                    **Fast Phaseout**. The match amount is capped for those earning more than **two thirds** of 
                     median earnings (in 2020, the median was approximately $52,000).
                     For every thousand dollars in income over this threshold, the 
                     match amount decreases by **five percent**.
@@ -393,6 +393,8 @@ app.layout = dbc.Container(
                                             style_cell={
                                                 "font-size": "12px",
                                                 "font-family": "HelveticaNeue",
+                                                "whiteSpace": "normal",
+                                                "height": "auto"
                                             },
                                             style_data_conditional=[
                                                 {
@@ -403,6 +405,9 @@ app.layout = dbc.Container(
                                             style_header={
                                                 "backgroundColor": "rgb(230, 230, 230)",
                                                 "fontWeight": "bold",
+                                            },
+                                            style_table={
+                                                "overflowX": "auto"
                                             },
                                         )
                                     ],
@@ -425,12 +430,12 @@ app.layout = dbc.Container(
                             ]
                         ),
                     ],
-                    style={"margin-left": "5%", "padding-right": "5%"},
+                    # style={"margin-left": "5%", "padding-right": "5%"},
                 ),
             ],
         ),
     ],
-    style={"padding-left": "10%", "padding-right": "10%"},
+    # style={"padding-left": "10%", "padding-right": "10%"},
 )
 
 #     ],
