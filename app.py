@@ -417,7 +417,7 @@ app.layout = dbc.Container(
                                     """
                     ---
                     """,
-                                style={"margin-left": "5%", "margin-top": 30},),
+                                style={"margin-left": "5%", "margin-right": "5%", "margin-top": 30},),
                                 dbc.Label(
                                     "Cumulative Effects",
                                     style={
