@@ -343,7 +343,7 @@ app.layout = dbc.Container(
                     [
                         dcc.Markdown(
                             """
-                    ## Interactive Tool: The Costs and Benefits of a Federal Savings Match
+                    ### Interactive Tool: The Benefits and Costs of a Federal Retirement Savings Program for Low-Income Workers
                     """,
                             style={
                                 "color": "#75A074",
@@ -357,7 +357,10 @@ app.layout = dbc.Container(
                             """
                     This interactive tool is intended to simulate the potential federal budgetary 
                     and wealth generation impacts of a wealth-building program like TSP for 
-                    low- and moderate-income Americans. Enter a matching rate, benefit phaseout scenario, 
+                    low- and moderate-income Americans. TSP offers a proven model for wealth-building 
+                    that can attribute much of its success to a federal match, which has been shown to 
+                    significantly boost worker participation and savings. 
+                    Enter a matching rate, benefit phaseout scenario, 
                     takeup rate, early withdrawal rate, and anticipated average annual returns to 
                     explore possible federal budgetary impacts and aggregate wealth creation of such a program.
 
@@ -394,7 +397,7 @@ app.layout = dbc.Container(
                                                 "font-size": "12px",
                                                 "font-family": "HelveticaNeue",
                                                 "whiteSpace": "normal",
-                                                "height": "auto"
+                                                "height": "auto",
                                             },
                                             style_data_conditional=[
                                                 {
@@ -406,9 +409,7 @@ app.layout = dbc.Container(
                                                 "backgroundColor": "rgb(230, 230, 230)",
                                                 "fontWeight": "bold",
                                             },
-                                            style_table={
-                                                "overflowX": "auto"
-                                            },
+                                            style_table={"overflowX": "auto"},
                                         )
                                     ],
                                     style={"margin-left": "5%", "padding-right": "5%"},
@@ -417,7 +418,12 @@ app.layout = dbc.Container(
                                     """
                     ---
                     """,
-                                style={"margin-left": "5%", "margin-right": "5%", "margin-top": 30},),
+                                    style={
+                                        "margin-left": "5%",
+                                        "margin-right": "5%",
+                                        "margin-top": 30,
+                                    },
+                                ),
                                 dbc.Label(
                                     "Cumulative Effects",
                                     style={
