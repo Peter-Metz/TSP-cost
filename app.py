@@ -385,7 +385,7 @@ app.layout = dbc.Container(
                                     },
                                 ),
                                 dbc.Label(
-                                    "Annual Effects",
+                                    "Annual Effects (Billions USD)",
                                     style={"margin-left": "5%", "font-style": "italic"},
                                 ),
                                 html.Div(
